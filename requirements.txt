@@ -1,0 +1,7 @@
+boto3==1.28.62
+requests==2.31.0
+beautifulsoup4==4.12.2
+pandas==2.0.3
+numpy==1.24.3
+aws-cdk-lib==2.95.0
+constructs>=10.0.0
