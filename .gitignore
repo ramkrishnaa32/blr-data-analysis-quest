@@ -1,0 +1,64 @@
+# -----------------
+# Python
+# -----------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.conda/
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs / temp files
+*.log
+*.out
+*.err
+*.tmp
+*.swp
+
+# Test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+*.cover
+
+# IDE / editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# MyPy / Pyre / Pylint
+.mypy_cache/
+.pyre/
+.pylint.d/
+
+# AWS / Credentials (if any)
+*.pem
+*.key
+
+# AWS CDK output
+cdk.out/cdk.out/
