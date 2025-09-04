@@ -1,3 +1,7 @@
 # S3 Path to Data Files
 api-data: https://rearc-data-quest-us-east-01.s3.us-east-1.amazonaws.com/api-data/population_data.json
 bls-data: https://rearc-data-quest-us-east-01.s3.us-east-1.amazonaws.com/bls-data/pub/time.series/pr/pr.data.0.Current
+
+
+
+

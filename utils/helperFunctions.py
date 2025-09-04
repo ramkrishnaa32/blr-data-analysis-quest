@@ -95,7 +95,7 @@ def should_update_file(filename: str, file_info: dict, existing_metadata: dict) 
         
     except Exception as e:
         logging.warning(f"Could not check hash for {filename}, will update: {e}")
-        return True  # If we can't check, better to update
+        return True
 
 def download_and_upload_file(filename, file_info):
         """Download a file from BLS and upload to S3"""
@@ -123,7 +123,7 @@ def download_and_upload_file(filename, file_info):
                 }
             )
             logging.info(f"Uploaded {filename} to s3://{bucket_name}/{s3_key}")
-            return file_hash  # Return the hash instead of just True
+            return file_hash
 
         except Exception as e:
             logging.error(f"Error processing {filename}: {e}")
