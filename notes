@@ -1,7 +1,205 @@
-# S3 Path to Data Files
+# 🚀 COMPLETE DATA PIPELINE RUNNING GUIDE
+
+## 📋 Prerequisites Check
+# Check if you're in the right directory
+pwd
+# Should show: /Users/kramkrishnaachary/Desktop/Rearc/quest
+
+# Check if virtual environment is activated
+which python
+# Should show: /Users/kramkrishnaachary/Desktop/Rearc/quest/.venv/bin/python
+
+# If not activated, activate it:
+source .venv/bin/activate
+
+## 🔧 Step 1: Environment Setup
+# 1. Activate virtual environment
+source .venv/bin/activate
+
+# 2. Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# 3. Set environment variables
+export S3_BUCKET_NAME="rearc-data-quest-650653607934"
+export AWS_DEFAULT_REGION="us-east-1"
+
+# 4. Verify AWS credentials
+aws sts get-caller-identity
+
+## 🧪 Step 2: Test Individual Parts
+
+### Test Part 1: BLS Data Sync
+# Run Part 1 to sync BLS data
+python part1_bls_sync.py
+
+# Expected output:
+# Starting BLS data synchronization...
+# Found X files on BLS website
+# Adding new file: pr.data.0.Current
+# Adding new file: pr.data.1.Current
+# ... (more files)
+# BLS sync completed successfully!
+# Added: X, Updated: 0, Deleted: 0
+# Total files: X
+
+### Test Part 2: API Data Fetch
+# Run Part 2 to fetch population data
+python part2_api_fetch.py
+
+# Expected output:
+# Starting population data fetch...
+# Successfully fetched X records from API
+# Saved timestamped data to: api-data/population_data_YYYYMMDD_HHMMSS.json
+# Saved latest data to: api-data/population_data_latest.json
+# Population data fetch completed successfully!
+
+### Test Part 3: Data Analytics
+# Open Jupyter notebook
+jupyter notebook part3_data_analytics.ipynb
+
+# Or if you prefer JupyterLab:
+jupyter lab part3_data_analytics.ipynb
+
+# Run all cells in the notebook to perform analytics
+
+## ☁️ Step 3: Test AWS Lambda Functions
+
+### Test Data Sync Lambda
+# Test the data sync lambda function
+aws lambda invoke \
+  --function-name DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 \
+  --payload '{}' \
+  response.json
+
+# Check the response
+cat response.json
+
+# Check the logs
+aws logs tail /aws/lambda/DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 --since 5m
+
+### Test Analytics Lambda
+# Check if analytics lambda was triggered by SQS
+aws logs tail /aws/lambda/DataPipelineStack-AnalyticsLambda406A5DA6-bAYQfOZ4HHvp --since 5m
+
+# Check SQS queue status
+aws sqs get-queue-attributes \
+  --queue-url https://sqs.us-east-1.amazonaws.com/650653607934/data-pipeline-processing-queue \
+  --attribute-names All
+
+## 📊 Step 4: Verify Data in S3
+# List all files in S3 bucket
+aws s3 ls s3://rearc-data-quest-650653607934/ --recursive
+
+# Check BLS data
+aws s3 ls s3://rearc-data-quest-650653607934/bls-data/
+
+# Check API data
+aws s3 ls s3://rearc-data-quest-650653607934/api-data/
+
+# Download and inspect a file
+aws s3 cp s3://rearc-data-quest-650653607934/api-data/population_data_latest.json ./temp_population.json
+cat temp_population.json
+
+## Step 5: Test Complete Pipeline
+
+### Manual Trigger (Full Pipeline)
+# 1. Clear SQS queue first
+aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/650653607934/data-pipeline-processing-queue
+
+# 2. Trigger data sync lambda
+aws lambda invoke \
+  --function-name DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 \
+  --payload '{}' \
+  response.json
+
+# 3. Wait for SQS message to be processed (about 30-60 seconds)
+sleep 30
+
+# 4. Check analytics lambda logs
+aws logs tail /aws/lambda/DataPipelineStack-AnalyticsLambda406A5DA6-bAYQfOZ4HHvp --since 2m
+
+# 5. Check for analytics results in S3
+aws s3 ls s3://rearc-data-quest-650653607934/analytics-results/
+
+### Scheduled Trigger (Daily at 2 AM UTC)
+# Check EventBridge rule
+aws events list-rules --name-prefix "DataPipeline"
+
+# Check recent executions
+aws logs tail /aws/lambda/DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 --since 24h
+
+## 🔍 Step 6: Monitoring and Debugging
+
+### View CloudWatch Logs
+# Data sync lambda logs
+aws logs tail /aws/lambda/DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 --since 1h
+
+# Analytics lambda logs
+aws logs tail /aws/lambda/DataPipelineStack-AnalyticsLambda406A5DA6-bAYQfOZ4HHvp --since 1h
+
+# Follow logs in real-time
+aws logs tail /aws/lambda/DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3 --follow
+
+### Check SQS Queue Status
+# Get queue attributes
+aws sqs get-queue-attributes \
+  --queue-url https://sqs.us-east-1.amazonaws.com/650653607934/data-pipeline-processing-queue \
+  --attribute-names All
+
+# Check for messages
+aws sqs receive-message \
+  --queue-url https://sqs.us-east-1.amazonaws.com/650653607934/data-pipeline-processing-queue
+
+## Step 7: Troubleshooting Common Issues
+
+### If Part 1 Fails:
+# Check BLS website access
+curl -H "User-Agent: DataPipeline/1.0" https://download.bls.gov/pub/time.series/pr/
+
+# Check S3 permissions
+aws s3 ls s3://rearc-data-quest-650653607934/
+
+### If Part 2 Fails:
+# Test API access
+curl "https://honolulu-api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_1&drilldowns=Year,Nation&locale=en&measures=Population"
+
+### If Lambda Functions Fail:
+# Check function configuration
+aws lambda get-function --function-name DataPipelineStack-DataSyncLambdaE3D45EA6-3aWy3hRd7zG3
+
+# Check IAM permissions
+aws iam get-role --role-name DataPipelineStack-DataSyncLambdaRole
+
+## 📈 Step 8: Verify Results
+
+### Check Analytics Results
+# List analytics results
+aws s3 ls s3://rearc-data-quest-650653607934/analytics-results/ --recursive
+
+# Download and view results
+aws s3 cp s3://rearc-data-quest-650653607934/analytics-results/population_stats.json ./population_stats.json
+cat population_stats.json
+
+## Step 9: Re-running and Updates
+
+### To Re-run Individual Parts:
+# Just run the specific part
+python part1_bls_sync.py
+python part2_api_fetch.py
+
+### To Update Lambda Functions:
+# Deploy updated code
+cdk deploy
+
+### To Clear and Re-sync:
+# Clear S3 data (be careful!)
+aws s3 rm s3://rearc-data-quest-650653607934/bls-data/ --recursive
+aws s3 rm s3://rearc-data-quest-650653607934/api-data/ --recursive
+
+# Re-run sync
+python part1_bls_sync.py
+python part2_api_fetch.py
+
+## 📁 S3 Data Paths
 api-data: https://rearc-data-quest-us-east-01.s3.us-east-1.amazonaws.com/api-data/population_data.json
 bls-data: https://rearc-data-quest-us-east-01.s3.us-east-1.amazonaws.com/bls-data/pub/time.series/pr/pr.data.0.Current
-
-
-
-
